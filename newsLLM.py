@@ -20,6 +20,96 @@ processed_files = set()  # 记录已经处理过的文件
 watcher_thread = None  # 文件监视线程
 observer = None  # 文件观察者
 
+IMPACT_LABELS = {
+    "positive": "利好",
+    "neutral": "中性",
+    "negative": "利空",
+    "unknown": "未知"
+}
+
+EVENT_TYPE_LABELS = {
+    "regulation": "监管",
+    "delisting": "退市风险",
+    "fraud": "欺诈",
+    "share_issuance": "股权/融资",
+    "executive_change": "高管变动",
+    "policy_change": "政策变化",
+    "merger": "合并重组",
+    "large_holder_trade": "大股东交易",
+    "organization_change": "组织变化",
+    "investigation": "立案调查",
+    "security_breach": "安全事件",
+    "acquisition": "收购",
+    "public_relations": "舆情公关",
+    "other": "其他",
+    "others": "其他"
+}
+
+
+def parse_date_value(date_str, fmt):
+    """将日期字符串解析为datetime，失败则返回None"""
+    if not isinstance(date_str, str) or not date_str:
+        return None
+
+    try:
+        return datetime.strptime(date_str, fmt)
+    except ValueError:
+        return None
+
+
+def get_collection_date(file_path, json_directory):
+    """从JSON相对路径中提取采集日期"""
+    relative_path = os.path.relpath(file_path, json_directory)
+    path_parts = relative_path.split(os.sep)
+    if not path_parts:
+        return None
+
+    return parse_date_value(path_parts[0], "%Y%m%d")
+
+
+def get_event_sort_date(event_date):
+    """解析事件日期，用于排序回退"""
+    return parse_date_value(event_date, "%Y-%m-%d") or datetime.min
+
+
+def get_news_sort_key(news_item):
+    """新闻排序键：优先按采集日期，再按文件修改时间，再按事件日期"""
+    return (
+        news_item.get("_collection_sort", datetime.min),
+        news_item.get("_updated_sort", 0.0),
+        news_item.get("_event_sort", datetime.min)
+    )
+
+
+def build_news_item(data, file_path, json_directory, base_dir):
+    """构建前端展示需要的新闻数据"""
+    source_file = os.path.basename(file_path)
+    txt_filename = os.path.splitext(source_file)[0] + ".txt"
+    collection_date = get_collection_date(file_path, json_directory)
+    updated_timestamp = os.path.getmtime(file_path)
+    updated_datetime = datetime.fromtimestamp(updated_timestamp)
+    event_types = data.get("event_type")
+
+    if isinstance(event_types, list):
+        localized_event_types = [EVENT_TYPE_LABELS.get(event_type, event_type) for event_type in event_types]
+    elif event_types:
+        localized_event_types = [EVENT_TYPE_LABELS.get(event_types, event_types)]
+    else:
+        localized_event_types = []
+
+    news_item = dict(data)
+    news_item["source_file"] = source_file
+    news_item["news_txt_file"] = os.path.join(base_dir, "newsData", "Phonix", "ssgsyjy", txt_filename)
+    news_item["json_file_path"] = file_path
+    news_item["collection_date"] = collection_date.strftime("%Y-%m-%d") if collection_date else "未知"
+    news_item["updated_at"] = updated_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    news_item["impact_label"] = IMPACT_LABELS.get(news_item.get("impact_direction"), "未知")
+    news_item["event_type_labels"] = localized_event_types
+    news_item["_collection_sort"] = collection_date or datetime.min
+    news_item["_updated_sort"] = updated_timestamp
+    news_item["_event_sort"] = get_event_sort_date(news_item.get("event_date"))
+    return news_item
+
 class NewsFileHandler(FileSystemEventHandler):
     """处理新闻文件变化的处理器"""
     
@@ -180,10 +270,10 @@ def start_news_monitor(refresh_interval=30):
 
 def get_filtered_news_data(json_directory):
     """读取和过滤所有JSON文件，返回company_confidence >= 0.6的新闻数据"""
-    news_data = []
     base_dir = os.path.dirname(__file__)
-    
-    # 遍历json_directory下的所有日期目录
+    latest_news_by_source = {}
+
+    # 遍历json_directory下的所有日期目录，按同一source_file只保留最新版本
     for root, dirs, files in os.walk(json_directory):
         for file in files:
             if file.endswith('.json'):
@@ -191,25 +281,23 @@ def get_filtered_news_data(json_directory):
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                        # 检查company_confidence >= 0.6
                         if isinstance(data, dict) and 'company_confidence' in data:
-                            if data['company_confidence'] >= 0.6:
-                                # 为了显示方便，添加文件路径或标识
-                                data['source_file'] = file
-                                # 生成对应的新闻原文文件路径
-                                # JSON路径格式: json_directory/YYYYMMDD/Phonix/ssgsyjy/xxx.json
-                                # 新闻原文路径格式: newsData/Phonix/ssgsyjy/xxx.txt
-                                json_rel_path = os.path.relpath(file_path, json_directory)
-                                txt_filename = os.path.splitext(os.path.basename(json_rel_path))[0] + '.txt'
-                                data['news_txt_file'] = os.path.join(base_dir, 'newsData', 'Phonix', 'ssgsyjy', txt_filename)
-                                # 添加JSON文件路径，用于获取LLM判断原文
-                                data['json_file_path'] = file_path
-                                news_data.append(data)
+                            news_item = build_news_item(data, file_path, json_directory, base_dir)
+                            existing_item = latest_news_by_source.get(file)
+
+                            if existing_item is None or get_news_sort_key(news_item) > get_news_sort_key(existing_item):
+                                latest_news_by_source[file] = news_item
                 except json.JSONDecodeError:
                     print(f"解析JSON文件出错: {file_path}")
                 except Exception as e:
                     print(f"读取JSON文件出错 {file_path}: {e}")
-    
+
+    news_data = [
+        news_item for news_item in latest_news_by_source.values()
+        if news_item.get('company_confidence', 0) >= 0.6
+    ]
+    news_data.sort(key=get_news_sort_key, reverse=True)
+
     return news_data
 
 @app.route('/')
@@ -219,10 +307,24 @@ def index():
     json_directory = os.path.join(os.path.dirname(__file__), 'newsJson')
     # 获取过滤后的新闻数据
     news_data = get_filtered_news_data(json_directory)
+    latest_collection_date = news_data[0]['collection_date'] if news_data else "暂无"
+    latest_update_time = news_data[0]['updated_at'] if news_data else "暂无"
+    impact_stats = {
+        'positive': sum(1 for item in news_data if item.get('impact_direction') == 'positive'),
+        'neutral': sum(1 for item in news_data if item.get('impact_direction') == 'neutral'),
+        'negative': sum(1 for item in news_data if item.get('impact_direction') == 'negative')
+    }
     # 获取当前时间
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # 渲染模板
-    return render_template('index.html', news_data=news_data, current_time=current_time)
+    return render_template(
+        'index.html',
+        news_data=news_data,
+        current_time=current_time,
+        latest_collection_date=latest_collection_date,
+        latest_update_time=latest_update_time,
+        impact_stats=impact_stats
+    )
 
 @app.route('/news/<filename>')
 def get_news_content(filename):

@@ -5,276 +5,522 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>newsLLM</title>
     <style>
+        :root {
+            --bg-top: #eef6ff;
+            --bg-bottom: #f8f4ea;
+            --panel: rgba(8, 28, 54, 0.86);
+            --panel-border: rgba(255, 255, 255, 0.14);
+            --surface: rgba(255, 255, 255, 0.86);
+            --surface-strong: #ffffff;
+            --surface-border: rgba(15, 39, 70, 0.08);
+            --text-main: #16233a;
+            --text-secondary: #5f6f86;
+            --accent: #0f7a87;
+            --accent-strong: #0a5f79;
+            --accent-soft: rgba(15, 122, 135, 0.12);
+            --warm: #f4b042;
+            --positive: #13795b;
+            --positive-bg: #e8f6f0;
+            --neutral: #6d7787;
+            --neutral-bg: #edf1f7;
+            --negative: #b5473c;
+            --negative-bg: #fdeceb;
+            --shadow-lg: 0 24px 60px rgba(15, 39, 70, 0.12);
+            --shadow-md: 0 16px 32px rgba(15, 39, 70, 0.08);
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
+            min-height: 100vh;
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at top left, rgba(15, 122, 135, 0.12), transparent 26%),
+                radial-gradient(circle at top right, rgba(244, 176, 66, 0.12), transparent 22%),
+                linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
             line-height: 1.6;
         }
-        
+
         .container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 32px 20px 56px;
         }
-        
-        header {
-            background-color: #3498db;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.9fr);
+            gap: 24px;
+            padding: 32px;
+            border-radius: var(--radius-xl);
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            color: #f6fbff;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(16px);
         }
-        
-        h1 {
-            font-size: 2.5em;
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -10% -25% auto;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(244, 176, 66, 0.35), transparent 68%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 48%);
+            pointer-events: none;
+        }
+
+        .hero-content,
+        .stats-grid {
+            position: relative;
+            z-index: 1;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            margin-bottom: 18px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 4vw, 3.4rem);
+            line-height: 1.1;
+            margin-bottom: 16px;
+            max-width: 680px;
+        }
+
+        .hero-description {
+            max-width: 720px;
+            color: rgba(241, 247, 255, 0.84);
+            font-size: 1.04rem;
+        }
+
+        .hero-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .hero-chip,
+        .timestamp {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.92rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            align-content: start;
+        }
+
+        .stat-card {
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            min-height: 132px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.84rem;
+            color: rgba(236, 244, 255, 0.72);
             margin-bottom: 10px;
-            text-align: center;
         }
-        
-        .subtitle {
-            font-size: 1.1em;
-            text-align: center;
-            opacity: 0.9;
+
+        .stat-value {
+            display: block;
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            word-break: break-word;
         }
-        
-        .news-count {
-            background-color: #2980b9;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            margin-top: 15px;
-            display: inline-block;
+
+        .stat-hint {
+            display: block;
+            color: rgba(236, 244, 255, 0.74);
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
-        
-        .header-content {
+
+        .news-section {
+            margin-top: 32px;
+        }
+
+        .section-head {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            align-items: flex-end;
+            gap: 18px;
+            margin-bottom: 20px;
         }
-        
-        .timestamp {
-            color: #ecf0f1;
-            font-size: 1em;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
+
+        .section-head h2 {
+            font-size: 1.6rem;
+            margin-bottom: 6px;
         }
-        
-        .action-links {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
+
+        .section-head p {
+            color: var(--text-secondary);
         }
-        
-        .action-link {
-            background-color: #3498db;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.8em;
-            font-weight: 500;
-            transition: background-color 0.2s;
+
+        .sort-note {
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(15, 122, 135, 0.08);
+            color: var(--accent-strong);
+            border: 1px solid rgba(15, 122, 135, 0.14);
+            font-size: 0.92rem;
+            white-space: nowrap;
         }
-        
-        .action-link:hover {
-            background-color: #2980b9;
-        }
-        
-        .action-link.secondary {
-            background-color: #95a5a6;
-        }
-        
-        .action-link.secondary:hover {
-            background-color: #7f8c8d;
-        }
-        
+
         .news-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 22px;
         }
-        
+
         .news-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(14px);
+            transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
         }
-        
+
+        .news-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent), var(--warm));
+        }
+
         .news-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 40px rgba(15, 39, 70, 0.12);
+            border-color: rgba(15, 122, 135, 0.18);
         }
-        
-        .card-header {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .company-info {
+
+        .card-top,
+        .company-row,
+        .confidence-row,
+        .action-links {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            gap: 12px;
         }
-        
-        .company-name {
-            font-size: 1.3em;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        
-        .ticker {
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 500;
-        }
-        
-        .event-type {
-            background-color: #f3e5f5;
-            color: #7b1fa2;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        
-        .summary {
-            font-size: 1em;
-            color: #555;
-            margin-bottom: 15px;
-            line-height: 1.7;
-        }
-        
-        .event-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-        }
-        
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .meta-label {
-            font-weight: 500;
-            color: #7f8c8d;
-        }
-        
-        .impact {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 500;
-        }
-        
-        .impact.positive {
-            background-color: #e8f5e8;
-            color: #2e7d32;
-        }
-        
-        .impact.neutral {
-            background-color: #e0e0e0;
-            color: #616161;
-        }
-        
-        .impact.negative {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        
-        .impact.unknown {
-            background-color: #f5f5f5;
-            color: #9e9e9e;
-        }
-        
-        .confidence {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .confidence-bar {
-            flex: 1;
-            height: 8px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .confidence-fill {
-            height: 100%;
-            background-color: #4caf50;
-            border-radius: 4px;
-        }
-        
-        .confidence-score {
-            font-size: 0.9em;
-            font-weight: 500;
-            color: #4caf50;
-            min-width: 50px;
-        }
-        
+
+        .card-badges,
+        .event-types,
         .tags {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
-        
+
+        .badge,
+        .event-chip,
+        .tag,
+        .ticker {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 7px 12px;
+        }
+
+        .badge-collection {
+            background: rgba(15, 122, 135, 0.1);
+            color: var(--accent-strong);
+        }
+
+        .badge-latest {
+            background: rgba(244, 176, 66, 0.18);
+            color: #9a5a00;
+        }
+
+        .badge-top {
+            background: rgba(17, 119, 89, 0.12);
+            color: var(--positive);
+        }
+
+        .file-id {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-family: "SFMono-Regular", "Consolas", monospace;
+        }
+
+        .company-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #132036;
+        }
+
+        .company-subtitle {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 0.94rem;
+        }
+
+        .ticker {
+            padding: 9px 14px;
+            background: rgba(20, 58, 97, 0.06);
+            color: #234978;
+            white-space: nowrap;
+        }
+
+        .event-chip {
+            padding: 7px 12px;
+            background: rgba(15, 122, 135, 0.08);
+            color: var(--accent-strong);
+        }
+
+        .summary {
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 247, 252, 0.9));
+            border: 1px solid rgba(15, 39, 70, 0.06);
+            color: #2d405f;
+            line-height: 1.75;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .meta-block {
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(244, 247, 251, 0.9);
+            border: 1px solid rgba(15, 39, 70, 0.06);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+
+        .meta-value {
+            color: var(--text-main);
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .impact-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        .impact-pill.positive {
+            background: var(--positive-bg);
+            color: var(--positive);
+        }
+
+        .impact-pill.neutral {
+            background: var(--neutral-bg);
+            color: var(--neutral);
+        }
+
+        .impact-pill.negative {
+            background: var(--negative-bg);
+            color: var(--negative);
+        }
+
+        .impact-pill.unknown {
+            background: var(--neutral-bg);
+            color: var(--neutral);
+        }
+
+        .confidence-row {
+            align-items: center;
+        }
+
+        .confidence-track {
+            flex: 1;
+            height: 10px;
+            background: rgba(18, 34, 62, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #0f7a87, #46b987);
+        }
+
+        .confidence-score {
+            min-width: 54px;
+            text-align: right;
+            font-weight: 700;
+            color: var(--accent-strong);
+        }
+
         .tag {
-            background-color: #f0f4f8;
-            color: #4a6fa5;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
+            padding: 7px 11px;
+            background: rgba(21, 73, 120, 0.06);
+            color: #355376;
         }
-        
+
+        .action-links {
+            margin-top: auto;
+        }
+
+        .action-link {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 16px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+        }
+
+        .action-link:hover {
+            transform: translateY(-1px);
+        }
+
+        .action-link.primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #ffffff;
+        }
+
+        .action-link.secondary {
+            background: rgba(18, 34, 62, 0.06);
+            color: #24456f;
+        }
+
         .empty-state {
+            margin-top: 32px;
+            padding: 52px 28px;
             text-align: center;
-            padding: 60px 20px;
-            color: #7f8c8d;
+            border-radius: var(--radius-xl);
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(15, 39, 70, 0.08);
+            box-shadow: var(--shadow-md);
         }
-        
+
         .empty-state h2 {
-            font-size: 1.5em;
+            font-size: 1.7rem;
             margin-bottom: 10px;
         }
-        
-        @media (max-width: 768px) {
-            .news-grid {
+
+        .empty-state p {
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 980px) {
+            .hero {
                 grid-template-columns: 1fr;
             }
-            
-            h1 {
-                font-size: 2em;
+
+            .section-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .sort-note {
+                white-space: normal;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .container {
+                padding: 20px 14px 40px;
+            }
+
+            .hero,
+            .news-card,
+            .empty-state {
+                padding: 20px;
+            }
+
+            .stats-grid,
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .company-row,
+            .card-top,
+            .confidence-row,
+            .action-links {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .action-link {
+                width: 100%;
+            }
+
+            .ticker,
+            .file-id,
+            .confidence-score {
+                text-align: left;
             }
         }
     </style>
     <script>
-        // 更新时间函数
         function updateTime() {
             const now = new Date();
             const formattedTime = now.toLocaleString('zh-CN', {
@@ -285,110 +531,165 @@
                 minute: '2-digit',
                 second: '2-digit'
             });
-            // 更新页面上的时间显示
+
             const timestampElement = document.querySelector('.timestamp');
             if (timestampElement) {
                 timestampElement.textContent = `当前时间: ${formattedTime}`;
             }
         }
-        
-        // 页面加载完成后开始更新时间
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 立即更新一次时间
             updateTime();
-            // 设置定时器，每秒更新一次时间
             setInterval(updateTime, 1000);
         });
     </script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="header-content">
-                <h1>新闻解析结果展示</h1>
-                <div class="timestamp">当前时间: {{ current_time }}</div>
+        <header class="hero">
+            <div class="hero-content">
+                <span class="eyebrow">newsLLM · 实时新闻解析看板</span>
+                <h1>更新的新闻排在最前面，列表默认只保留最新解析结果。</h1>
+                <p class="hero-description">
+                    这里展示的是经过结构化抽取且 `company_confidence >= 0.6` 的新闻。列表已按最新采集批次和最新更新时间倒序排列，同一条新闻只保留最新版本。
+                </p>
+                <div class="hero-chips">
+                    <span class="hero-chip">最新批次：{{ latest_collection_date }}</span>
+                    <span class="hero-chip">最近更新：{{ latest_update_time }}</span>
+                    <span class="timestamp">当前时间: {{ current_time }}</span>
+                </div>
             </div>
-            <div class="subtitle">实时监控和解析财经新闻，提取结构化事件信息</div>
-            <div class="news-count">共找到 {{ news_data|length }} 条有效新闻</div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">有效新闻</span>
+                    <strong class="stat-value">{{ news_data|length }}</strong>
+                    <span class="stat-hint">已按最新版本去重并过滤低置信度结果。</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">利空新闻</span>
+                    <strong class="stat-value">{{ impact_stats.negative }}</strong>
+                    <span class="stat-hint">优先关注最新批次中的负面事件。</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">中性新闻</span>
+                    <strong class="stat-value">{{ impact_stats.neutral }}</strong>
+                    <span class="stat-hint">适合做后续人工复核或补充判断。</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">利好新闻</span>
+                    <strong class="stat-value">{{ impact_stats.positive }}</strong>
+                    <span class="stat-hint">按相同规则与其他新闻一起倒序展示。</span>
+                </div>
+            </div>
         </header>
-        
+
         {% if news_data %}
-            <div class="news-grid">
-                {% for news in news_data %}
-                    <div class="news-card">
-                        <div class="card-header">
-                            <div class="company-info">
-                                <div class="company-name">{{ news.company if news.company is defined else '未知公司' }}</div>
-                                {% if news.ticker is defined %}
+            <section class="news-section">
+                <div class="section-head">
+                    <div>
+                        <h2>新闻列表</h2>
+                        <p>列表首位就是当前最新更新的新闻，越靠前代表采集时间越新。</p>
+                    </div>
+                    <div class="sort-note">排序规则：采集日期 > 文件更新时间 > 事件日期</div>
+                </div>
+
+                <div class="news-grid">
+                    {% for news in news_data %}
+                        <article class="news-card">
+                            <div class="card-top">
+                                <div class="card-badges">
+                                    <span class="badge badge-collection">采集 {{ news.collection_date }}</span>
+                                    {% if news.collection_date == latest_collection_date %}
+                                        <span class="badge badge-latest">最新批次</span>
+                                    {% endif %}
+                                    {% if loop.first %}
+                                        <span class="badge badge-top">当前置顶</span>
+                                    {% endif %}
+                                </div>
+                                {% if news.source_file is defined %}
+                                    <div class="file-id">{{ news.source_file|replace('.json', '') }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="company-row">
+                                <div>
+                                    <div class="company-name">{{ news.company if news.company else '未知公司' }}</div>
+                                    <div class="company-subtitle">结构化事件提取结果</div>
+                                </div>
+                                {% if news.ticker %}
                                     <div class="ticker">{{ news.ticker }}</div>
                                 {% endif %}
                             </div>
-                            {% if news.event_type is defined %}
-                                {% if news.event_type is iterable and news.event_type is not string %}
-                                    {% for event in news.event_type %}
-                                        <span class="event-type">{{ event }}</span>
+
+                            {% if news.event_type_labels %}
+                                <div class="event-types">
+                                    {% for event_label in news.event_type_labels %}
+                                        <span class="event-chip">{{ event_label }}</span>
                                     {% endfor %}
-                                {% else %}
-                                    <span class="event-type">{{ news.event_type }}</span>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="summary">{{ news.summary if news.summary is defined else '' }}</div>
-                        
-                        <div class="event-meta">
-                            {% if news.event_date is defined %}
-                                <div class="meta-item">
-                                    <span class="meta-label">日期:</span>
-                                    <span>{{ news.event_date }}</span>
                                 </div>
                             {% endif %}
-                            <div class="meta-item">
-                                <span class="meta-label">影响:</span>
-                                <span class="impact {{ news.impact_direction if news.impact_direction is defined else 'unknown' }}">{{ news.impact_direction if news.impact_direction is defined else 'unknown' }}</span>
+
+                            <div class="summary">{{ news.summary if news.summary else '暂无摘要' }}</div>
+
+                            <div class="meta-grid">
+                                <div class="meta-block">
+                                    <span class="meta-label">事件日期</span>
+                                    <div class="meta-value">{{ news.event_date if news.event_date else '未知' }}</div>
+                                </div>
+                                <div class="meta-block">
+                                    <span class="meta-label">最新更新时间</span>
+                                    <div class="meta-value">{{ news.updated_at }}</div>
+                                </div>
+                                <div class="meta-block">
+                                    <span class="meta-label">影响方向</span>
+                                    <span class="impact-pill {{ news.impact_direction if news.impact_direction else 'unknown' }}">{{ news.impact_label }}</span>
+                                </div>
+                                <div class="meta-block">
+                                    <span class="meta-label">影响分数</span>
+                                    <div class="meta-value">
+                                        {{ '%.2f'|format(news.impact_score) if (news.impact_score is defined and news.impact_score is not none) else '暂无' }}
+                                    </div>
+                                </div>
                             </div>
-                            {% if news.impact_score is defined %}
-                                <div class="meta-item">
-                                    <span class="meta-label">影响分数:</span>
-                                    <span>{{ news.impact_score }}</span>
+
+                            <div class="confidence-row">
+                                <span class="meta-label">置信度</span>
+                                <div class="confidence-track">
+                                    <div class="confidence-fill" style="width: {{ (news.confidence * 100) if (news.confidence is defined and news.confidence is not none) else 0 }}%"></div>
+                                </div>
+                                <span class="confidence-score">
+                                    {{ '%.0f'|format((news.confidence * 100) if (news.confidence is defined and news.confidence is not none) else 0) }}%
+                                </span>
+                            </div>
+
+                            {% if news.tags is defined and news.tags %}
+                                <div class="tags">
+                                    {% if news.tags is iterable and news.tags is not string %}
+                                        {% for tag in news.tags %}
+                                            <span class="tag">{{ tag }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="tag">{{ news.tags }}</span>
+                                    {% endif %}
                                 </div>
                             {% endif %}
-                        </div>
-                        
-                        <div class="confidence">
-                            <span class="meta-label">置信度:</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" style="width: {{ (news.confidence * 100) if (news.confidence is defined and news.confidence is not none) else 0 }}%"></div>
-                            </div>
-                            <span class="confidence-score">{{ '%.2f'|format(news.confidence) if (news.confidence is defined and news.confidence is not none) else '0.00' }}</span>
-                        </div>
-                        
-                        {% if news.tags is defined %}
-                            <div class="tags">
-                                {% if news.tags is iterable and news.tags is not string %}
-                                    {% for tag in news.tags %}
-                                        <span class="tag">{{ tag }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="tag">{{ news.tags }}</span>
+
+                            <div class="action-links">
+                                {% if news.source_file is defined %}
+                                    {% set txt_filename = news.source_file|replace('.json', '.txt') %}
+                                    <a href="/news/{{ txt_filename }}" class="action-link primary">查看新闻原文</a>
+                                    <a href="/llm/{{ news.source_file }}" class="action-link secondary">查看 LLM 判断原文</a>
                                 {% endif %}
                             </div>
-                        {% endif %}
-                        
-                        <div class="action-links">
-                            {% if news.source_file is defined %}
-                                {% set txt_filename = news.source_file|replace('.json', '.txt') %}
-                                <a href="/news/{{ txt_filename }}" class="action-link">查看新闻原文</a>
-                                <a href="/llm/{{ news.source_file }}" class="action-link secondary">查看LLM判断原文</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
         {% else %}
             <div class="empty-state">
                 <h2>暂无有效新闻数据</h2>
-                <p>系统正在监控和解析新闻，请稍后刷新查看</p>
+                <p>系统仍在监听新闻并生成结构化结果，稍后刷新即可看到最新内容。</p>
             </div>
         {% endif %}
     </div>

@@ -5,87 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - {{ filename }}</title>
     <style>
+        :root {
+            --bg-top: #eef6ff;
+            --bg-bottom: #f8f4ea;
+            --panel: rgba(8, 28, 54, 0.86);
+            --panel-border: rgba(255, 255, 255, 0.14);
+            --surface: rgba(255, 255, 255, 0.88);
+            --surface-border: rgba(15, 39, 70, 0.08);
+            --text-main: #16233a;
+            --text-secondary: #5f6f86;
+            --accent: #0f7a87;
+            --accent-strong: #0a5f79;
+            --shadow-lg: 0 24px 60px rgba(15, 39, 70, 0.12);
+            --shadow-md: 0 18px 36px rgba(15, 39, 70, 0.08);
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
+            min-height: 100vh;
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at top left, rgba(15, 122, 135, 0.12), transparent 24%),
+                radial-gradient(circle at top right, rgba(244, 176, 66, 0.12), transparent 22%),
+                linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+            line-height: 1.7;
         }
-        
+
         .container {
-            max-width: 1200px;
+            max-width: 1180px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 32px 20px 56px;
         }
-        
-        header {
-            background-color: #3498db;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 28px 32px;
+            border-radius: var(--radius-xl);
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            color: #f6fbff;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(16px);
         }
-        
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 48%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #f6fbff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .timestamp {
+            display: inline-flex;
+            align-items: center;
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(246, 251, 255, 0.92);
+            font-size: 0.94rem;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
         h1 {
-            font-size: 2em;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            line-height: 1.15;
             margin-bottom: 10px;
         }
-        
+
         .subtitle {
-            font-size: 1em;
-            opacity: 0.9;
+            color: rgba(241, 247, 255, 0.8);
+            word-break: break-all;
         }
-        
+
         .content-area {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            margin-bottom: 30px;
+            margin-top: 28px;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(14px);
         }
-        
+
+        .content-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(15, 39, 70, 0.08);
+        }
+
+        .content-title h2 {
+            font-size: 1.2rem;
+        }
+
+        .content-title span {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
         .content {
             white-space: pre-wrap;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1em;
+            font-size: 1rem;
+            color: #283a55;
+            line-height: 1.9;
+            word-break: break-word;
+        }
+
+        .content.structured {
+            font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+            font-size: 0.95rem;
             line-height: 1.8;
-            color: #444;
         }
-        
-        .back-link {
-            display: inline-block;
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        
-        .back-link:hover {
-            background-color: #2980b9;
-        }
-        
-        .timestamp {
-            color: #ecf0f1;
-            font-size: 1em;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-top: 10px;
-            display: inline-block;
+
+        @media (max-width: 720px) {
+            .container {
+                padding: 20px 14px 40px;
+            }
+
+            .hero,
+            .content-area {
+                padding: 20px;
+            }
+
+            .toolbar {
+                align-items: flex-start;
+            }
         }
     </style>
     <script>
-        // 更新时间函数
         function updateTime() {
             const now = new Date();
             const formattedTime = now.toLocaleString('zh-CN', {
@@ -96,35 +196,40 @@
                 minute: '2-digit',
                 second: '2-digit'
             });
-            // 更新页面上的时间显示
+
             const timestampElement = document.querySelector('.timestamp');
             if (timestampElement) {
                 timestampElement.textContent = `当前时间: ${formattedTime}`;
             }
         }
-        
-        // 页面加载完成后开始更新时间
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 立即更新一次时间
             updateTime();
-            // 设置定时器，每秒更新一次时间
             setInterval(updateTime, 1000);
         });
     </script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>{{ title }}</h1>
-            <div class="subtitle">{{ filename }}</div>
-            <div class="timestamp">当前时间: {{ current_time }}</div>
+        <header class="hero">
+            <div class="hero-content">
+                <div class="toolbar">
+                    <a href="/" class="back-link">返回新闻列表</a>
+                    <div class="timestamp">当前时间: {{ current_time }}</div>
+                </div>
+                <div class="eyebrow">newsLLM · 内容查看器</div>
+                <h1>{{ title }}</h1>
+                <div class="subtitle">{{ filename }}</div>
+            </div>
         </header>
-        
-        <div class="content-area">
-            <div class="content">{{ content }}</div>
-        </div>
-        
-        <a href="/" class="back-link">返回新闻列表</a>
+
+        <section class="content-area">
+            <div class="content-title">
+                <h2>内容正文</h2>
+                <span>{{ title }} 已按原始格式展示</span>
+            </div>
+            <div class="content {% if 'LLM' in title %}structured{% endif %}">{{ content }}</div>
+        </section>
     </div>
 </body>
 </html>
