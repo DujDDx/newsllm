@@ -1,0 +1,20 @@
+{
+  "ticker": "01797",
+  "company": "乐华娱乐",
+  "company_confidence": 0.9,
+  "event_type": [
+    "share_issuance",
+    "regulation"
+  ],
+  "summary": "乐华娱乐与其核心艺人王一博的续约问题引发市场关注，王一博成为公司收入的重要支柱，关系到公司未来走向。",
+  "event_date": "2025-11-01",
+  "impact_direction": "negative",
+  "impact_score": -0.5,
+  "confidence": 0.8,
+  "tags": [
+    "续约",
+    "艺人经纪",
+    "股价波动",
+    "合约到期"
+  ]
+}

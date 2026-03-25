@@ -291,6 +291,30 @@ def save_article_content(content, filename, directory):
         print(f"保存文件失败: {e}")
         return False
 
+
+def get_candidate_links(current_links, directory):
+    """返回当前首页上需要抓取或补齐元数据的链接"""
+    candidate_links = []
+    seen_candidates = set()
+
+    for link in current_links:
+        filename = extract_filename_from_url(link)
+        file_path = os.path.join(directory, filename)
+        metadata = load_text_metadata(file_path) if os.path.exists(file_path) else {}
+
+        needs_fetch = not os.path.exists(file_path)
+        needs_metadata = os.path.exists(file_path) and not metadata.get("published_at")
+        if not (needs_fetch or needs_metadata):
+            continue
+
+        if link in seen_candidates:
+            continue
+
+        seen_candidates.add(link)
+        candidate_links.append(link)
+
+    return candidate_links
+
 def monitor_news(base_url, refresh_interval, directory):
     """
     动态监测新闻链接
@@ -316,12 +340,20 @@ def monitor_news(base_url, refresh_interval, directory):
             current_links = scrape_news_links(base_url)
             print(f"找到 {len(current_links)} 个链接")
 
-            # 检查是否有新链接
+            # 检查是否有首页上尚未落盘或尚未补齐发布时间的链接
+            missing_or_incomplete_links = get_candidate_links(current_links, directory)
             new_links = [link for link in current_links if link not in seen_links]
+            links_to_process = []
+            queued = set()
+            for link in new_links + missing_or_incomplete_links:
+                if link in queued:
+                    continue
+                queued.add(link)
+                links_to_process.append(link)
             
-            if new_links:
-                print(f"发现 {len(new_links)} 个新链接")
-                for link in new_links:
+            if links_to_process:
+                print(f"发现 {len(links_to_process)} 个待处理链接")
+                for link in links_to_process:
                     print(f"处理新链接: {link}")
                     
                     filename = extract_filename_from_url(link)
@@ -330,7 +362,7 @@ def monitor_news(base_url, refresh_interval, directory):
                     metadata = load_text_metadata(file_path) if os.path.exists(file_path) else {}
 
                     if os.path.exists(file_path):
-                        update_text_metadata(
+                        metadata = update_text_metadata(
                             file_path,
                             source_url=link,
                             source_file=filename,
@@ -341,6 +373,8 @@ def monitor_news(base_url, refresh_interval, directory):
                                 cached_json_path if os.path.exists(cached_json_path) else None
                             )
                         )
+                        if not metadata.get("published_at"):
+                            metadata = ensure_article_metadata(file_path, link)
                         seen_links.add(link)
                         if metadata.get("is_parsed") or os.path.exists(cached_json_path):
                             print(f"新闻已解析过，直接复用本地结果: {filename}")
@@ -379,9 +413,6 @@ def monitor_news(base_url, refresh_interval, directory):
                     time.sleep(1)
             else:
                 print("没有发现新链接")
-            
-            # 更新已知链接集合
-            seen_links.update(current_links)
             
             print(f"等待 {refresh_interval} 秒后再次检查...")
             time.sleep(refresh_interval)
