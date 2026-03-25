@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "华与华",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "share_issuance"
+  ],
+  "summary": "华与华因广告违规被罚款100万元，且其关联公司读客文化业绩持续下滑，股东累计套现超1.7亿元。",
+  "event_date": "2025-11-26",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.8,
+  "tags": [
+    "广告违规",
+    "股东减持",
+    "业绩下滑"
+  ]
+}

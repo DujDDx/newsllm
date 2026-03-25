@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "洽洽食品",
+  "company_confidence": 0.8,
+  "event_type": [
+    "regulation",
+    "public_relations"
+  ],
+  "summary": "洽洽食品因旗下品牌洽洽瓜子的“干燥”谐音梗引发粉丝争议，导致股价下跌及品牌舆论风波，公司面临年轻化转型及市场压力。此次事件显示老牌企业在年轻化及舆情应对中的挑战。",
+  "event_date": "2025-12-02",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.75,
+  "tags": [
+    "品牌舆情",
+    "营销策略",
+    "年轻化"
+  ]
+}

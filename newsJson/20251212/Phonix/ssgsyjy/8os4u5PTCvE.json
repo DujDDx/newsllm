@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "台积电",
+  "company_confidence": 0.9,
+  "event_type": [
+    "policy_change",
+    "regulation"
+  ],
+  "summary": "台积电在大陆的布局持续推进，未来可能面临地缘政治及供应链风险，影响其全球竞争力。",
+  "event_date": "2025-12-04",
+  "impact_direction": "unknown",
+  "impact_score": 0.0,
+  "tags": [
+    "半导体",
+    "地缘政治",
+    "投资布局",
+    "供应链"
+  ]
+}

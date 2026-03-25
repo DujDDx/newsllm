@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "华与华",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "share_issuance"
+  ],
+  "summary": "华与华因发布违规广告被罚款100万元，并在读客文化高管减持中体现业绩下滑，显示公司面临法律与财务双重挑战。",
+  "event_date": "2021-07-19",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.85,
+  "tags": [
+    "违规处罚",
+    "股东减持",
+    "财务下滑"
+  ]
+}

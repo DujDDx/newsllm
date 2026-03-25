@@ -1,0 +1,20 @@
+{
+  "ticker": null,
+  "company": null,
+  "company_confidence": 0.3,
+  "event_type": [
+    "regulation",
+    "share_issuance",
+    "other"
+  ],
+  "summary": "华与华因广告违规被罚，关联公司读客文化业绩持续下滑，股东累计套现超1.7亿元。",
+  "event_date": "2020-xx-xx",
+  "impact_direction": "negative",
+  "impact_score": -0.7,
+  "confidence": 0.75,
+  "tags": [
+    "广告违规",
+    "业绩下滑",
+    "股东减持"
+  ]
+}

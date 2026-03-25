@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "美的集团",
+  "company_confidence": 0.8,
+  "event_type": [
+    "policy_change",
+    "regulation"
+  ],
+  "summary": "美的集团要求售后服务商不得同时承接小米和格力的空调维修业务，旨在应对激烈的市场竞争。",
+  "event_date": "2025-11-21",
+  "impact_direction": "negative",
+  "impact_score": -0.3,
+  "confidence": 0.75,
+  "tags": [
+    "政策调整",
+    "竞争策略",
+    "售后服务"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "ticker": null,
+  "company": "本田",
+  "company_confidence": 0.8,
+  "event_type": [
+    "regulation",
+    "other"
+  ],
+  "summary": "飞度在中国市场销量持续下滑，预计即将停产等待新款上市，面临新能源车的强烈竞争。公司正调整产品策略以适应市场变化。",
+  "event_date": null,
+  "impact_direction": "negative",
+  "impact_score": -0.7,
+  "confidence": 0.8,
+  "tags": [
+    "市场销量",
+    "停产",
+    "新能源车竞争",
+    "产品调整"
+  ]
+}

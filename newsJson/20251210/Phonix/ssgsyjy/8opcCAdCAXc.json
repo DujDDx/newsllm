@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "三星电子",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "other"
+  ],
+  "summary": "三星推出新款三折叠手机Galaxy Z TriFold，但市场反响及中国市场表现不及预期，其未来前景存在不确定性。",
+  "event_date": "2024-12-12",
+  "impact_direction": "neutral",
+  "impact_score": 0.0,
+  "tags": [
+    "新品发布",
+    "市场表现",
+    "品牌竞争",
+    "折叠屏"
+  ]
+}

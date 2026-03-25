@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "三星电子",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "other"
+  ],
+  "summary": "三星推出三折叠手机Galaxy Z TriFold，但面临市场审视与竞争压力，市场份额逐步下降，影响其在中国的市场地位。三星内部正进行调整以应对整体危机。",
+  "event_date": "2025-12-12",
+  "impact_direction": "negative",
+  "impact_score": -0.4,
+  "confidence": 0.8,
+  "tags": [
+    "市场竞争",
+    "产品创新",
+    "行业调整"
+  ]
+}

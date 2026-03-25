@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": null,
+  "company_confidence": 0.2,
+  "event_type": [
+    "share_issuance",
+    "regulation"
+  ],
+  "summary": "多家电脑厂商计划在2026年1月1日起提高存储相关产品价格，受成本上涨影响，可能涨幅达15-20%。",
+  "event_date": "2026-01-01",
+  "impact_direction": "negative",
+  "impact_score": 0.7,
+  "confidence": 0.6,
+  "tags": [
+    "价格调整",
+    "存储涨价",
+    "成本压力"
+  ]
+}

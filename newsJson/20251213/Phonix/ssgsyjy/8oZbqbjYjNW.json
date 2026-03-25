@@ -1,0 +1,19 @@
+{
+  "ticker": "688496",
+  "company": "清越科技",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "delisting"
+  ],
+  "summary": "清越科技因涉嫌财务造假和合同诈骗，收到证监会立案告知书，面临退市风险，股价大跌，公司业绩严重下滑。",
+  "event_date": "2025-08-01",
+  "impact_direction": "negative",
+  "impact_score": -0.8,
+  "confidence": 0.85,
+  "tags": [
+    "财务造假",
+    "退市风险",
+    "监管"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "ticker": null,
+  "company": "广西恒逸新材料有限公司",
+  "company_confidence": 0.8,
+  "event_type": [
+    "regulation",
+    "other"
+  ],
+  "summary": "广西恒逸新材料有限公司的厂区标语引发热议，涉及安全与自由的表达问题，显示其关注安全管理，但也引起了关于个人自由限制的讨论，同时公司宣布钦州项目进入试生产。",
+  "event_date": "2024-10-22",
+  "impact_direction": "neutral",
+  "impact_score": 0.0,
+  "confidence": 0.75,
+  "tags": [
+    "安全管理",
+    "企业文化",
+    "舆情",
+    "项目进展"
+  ]
+}

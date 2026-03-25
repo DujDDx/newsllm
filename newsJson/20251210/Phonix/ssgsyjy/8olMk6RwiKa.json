@@ -1,0 +1,19 @@
+{
+  "ticker": "000063",
+  "company": "中兴通讯",
+  "company_confidence": 0.9,
+  "event_type": [
+    "share_issuance",
+    "regulation"
+  ],
+  "summary": "中兴通讯推出搭载字节跳动AI模型的努比亚M153手机，市场反应热烈，但随后股价回调，反映短期市场情绪波动。",
+  "event_date": "2023-12-01",
+  "impact_direction": "neutral",
+  "impact_score": 0.0,
+  "confidence": 0.8,
+  "tags": [
+    "合作",
+    "新产品发布",
+    "股价波动"
+  ]
+}

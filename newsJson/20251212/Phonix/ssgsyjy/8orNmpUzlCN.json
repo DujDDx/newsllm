@@ -1,0 +1,22 @@
+{
+  "ticker": null,
+  "company": "智己汽车",
+  "company_confidence": 0.9,
+  "event_type": [
+    "share_issuance",
+    "regulation",
+    "other"
+  ],
+  "summary": "智己汽车2025年销量持续增长，但面临激烈市场竞争和品牌挑战，包括价格战、营销事故和质量投诉。",
+  "event_date": "2025-11-01",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.8,
+  "tags": [
+    "销量增长",
+    "市场竞争",
+    "价格战",
+    "品牌营销",
+    "质量投诉"
+  ]
+}

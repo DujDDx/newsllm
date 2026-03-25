@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": "三星电子",
+  "company_confidence": 0.9,
+  "event_type": [
+    "share_issuance"
+  ],
+  "summary": "三星推出新款三折叠手机Galaxy Z TriFold，售价约为17302元人民币，但在中国市场缺乏竞争力，市场份额显著下降。",
+  "event_date": "2023-12-12",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.85,
+  "tags": [
+    "新品发布",
+    "市场份额下降",
+    "折叠屏手机",
+    "技术创新"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "ticker": null,
+  "company": "小米集团",
+  "company_confidence": 0.8,
+  "event_type": [
+    "executive_change"
+  ],
+  "summary": "小米集团宣布高管王化轮岗至武汉总部担任综合管理部总经理，涉及公司内部人员调动。",
+  "event_date": "2025-11-20",
+  "impact_direction": "neutral",
+  "impact_score": 0.0,
+  "confidence": 0.85,
+  "tags": [
+    "人事变动",
+    "高管调动",
+    "企业内部"
+  ]
+}

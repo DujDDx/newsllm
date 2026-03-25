@@ -1,0 +1,21 @@
+{
+  "ticker": null,
+  "company": "诺和诺德",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "large_holder_trade",
+    "other"
+  ],
+  "summary": "司美格鲁肽相关新出现视力风险导致赔偿事件，且市场竞争激烈，国内外市场格局面临调整。",
+  "event_date": "2025-11-21",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.85,
+  "tags": [
+    "副作用",
+    "赔偿",
+    "市场竞争",
+    "药品监管"
+  ]
+}

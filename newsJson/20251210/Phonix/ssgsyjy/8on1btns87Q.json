@@ -1,0 +1,20 @@
+{
+  "ticker": null,
+  "company": "洽洽食品",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "other"
+  ],
+  "summary": "洽洽食品因在社交媒体上的互动引发舆论风波，影响股价，面临品牌老化与年轻化转型压力。",
+  "event_date": "2025-12-02",
+  "impact_direction": "negative",
+  "impact_score": -0.7,
+  "confidence": 0.85,
+  "tags": [
+    "品牌事件",
+    "舆论危机",
+    "年轻化",
+    "市场表现"
+  ]
+}

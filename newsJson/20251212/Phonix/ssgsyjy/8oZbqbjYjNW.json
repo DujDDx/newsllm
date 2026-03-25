@@ -1,0 +1,22 @@
+{
+  "ticker": "688496.SH",
+  "company": "清越科技",
+  "company_confidence": 0.9,
+  "event_type": [
+    "regulation",
+    "delisting",
+    "investigation"
+  ],
+  "summary": "清越科技因涉嫌财务造假面临证监会立案调查，股价大跌，存在退市风险，且公司业绩持续亏损和依赖大客户，经营状况令人担忧。",
+  "event_date": "2025-08-01",
+  "impact_direction": "negative",
+  "impact_score": -0.8,
+  "confidence": 0.9,
+  "tags": [
+    "财务造假",
+    "退市风险",
+    "监管",
+    "业绩下滑",
+    "行业依赖"
+  ]
+}

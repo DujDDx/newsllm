@@ -1,0 +1,20 @@
+{
+  "ticker": null,
+  "company": "小米集团",
+  "company_confidence": 0.8,
+  "event_type": [
+    "share_issuance",
+    "regulation"
+  ],
+  "summary": "小米集团进行多项人事调整，应对中国区业绩压力，涉及手机、汽车、大家电业务，预计部分门店将关闭以提升整体效率。",
+  "event_date": "2024-12-09",
+  "impact_direction": "negative",
+  "impact_score": -0.4,
+  "confidence": 0.7,
+  "tags": [
+    "人事调整",
+    "业绩压力",
+    "门店优化",
+    "库存压力"
+  ]
+}

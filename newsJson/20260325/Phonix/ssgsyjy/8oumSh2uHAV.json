@@ -1,0 +1,19 @@
+{
+  "ticker": null,
+  "company": null,
+  "company_confidence": 0.4,
+  "event_type": [
+    "share_issuance",
+    "policy_change"
+  ],
+  "summary": "存储涨价潮推动多家PC厂商计划涨价，惠普和戴尔等公司可能在2026年初实施涨价措施。",
+  "event_date": "2026-01-01",
+  "impact_direction": "negative",
+  "impact_score": -0.6,
+  "confidence": 0.7,
+  "tags": [
+    "涨价",
+    "存储成本",
+    "PC市场"
+  ]
+}
