@@ -3,6 +3,43 @@ from bs4 import BeautifulSoup
 import time
 import os
 from datetime import datetime
+import re
+from urllib.parse import urlparse
+
+
+ARTICLE_URL_PATTERN = re.compile(r"^https?://finance\.ifeng\.com/c/[^/?#]+$")
+
+
+def normalize_link(url, base_url):
+    """将链接统一转换为完整URL"""
+    if not url:
+        return None
+
+    if url.startswith('//'):
+        return 'https:' + url
+    if url.startswith('/'):
+        parsed_url = urlparse(base_url)
+        return f"{parsed_url.scheme}://{parsed_url.netloc}{url}"
+    return url
+
+
+def is_article_link(url):
+    """过滤出凤凰财经正文页链接"""
+    return bool(url and ARTICLE_URL_PATTERN.match(url))
+
+
+def deduplicate_links(links):
+    """按出现顺序去重"""
+    unique_links = []
+    seen = set()
+
+    for link in links:
+        if link in seen:
+            continue
+        seen.add(link)
+        unique_links.append(link)
+
+    return unique_links
 
 def scrape_news_links(url):
     """
@@ -38,19 +75,17 @@ def scrape_news_links(url):
             # 查找div中的a标签
             a_tags = item.find_all('a')
             for a_tag in a_tags:
-                href = a_tag.get('href')
-                if href:  # 确保href不为空
-                    # 处理相对链接
-                    if href.startswith('//'):
-                        href = 'https:' + href
-                    elif href.startswith('/'):
-                        # 如果是相对路径，需要根据基础URL进行处理
-                        base_url = url.split('/')[0] + '//' + url.split('/')[2]
-                        href = base_url + href
-                    
+                href = normalize_link(a_tag.get('href'), url)
+                if is_article_link(href):
+                    links.append(href)
+
+        if not links:
+            for a_tag in soup.find_all('a', href=True):
+                href = normalize_link(a_tag.get('href'), url)
+                if is_article_link(href):
                     links.append(href)
         
-        return links
+        return deduplicate_links(links)
     
     except requests.RequestException as e:
         print(f"请求错误: {e}")
@@ -58,22 +93,6 @@ def scrape_news_links(url):
     except Exception as e:
         print(f"解析错误: {e}")
         return []
-
-def get_even_indexed_links(links):
-    """
-    从链接列表中选择索引为偶数的链接（基于0索引）
-    
-    Args:
-        links (list): 原始链接列表
-        
-    Returns:
-        list: 包含索引为偶数的链接的新列表
-    """
-    even_indexed_links = []
-    for i in range(len(links)):
-        if i % 2 == 0:  # 索引为偶数（0, 2, 4, ...）
-            even_indexed_links.append(links[i])
-    return even_indexed_links
 
 def scrape_article_content(url):
     """
@@ -141,10 +160,6 @@ def main():
     
     if links:
         print(f"找到 {len(links)} 个链接")
-        
-        # 使用索引为偶数的链接覆盖原始链接列表
-        links = get_even_indexed_links(links)
-        print(f"筛选后剩余 {len(links)} 个链接")
         
         # 对每个链接进行进一步解析
         all_content = ""

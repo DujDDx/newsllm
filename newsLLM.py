@@ -10,6 +10,15 @@ from flask import Flask, render_template
 # 导入我们现有的模块
 from news_monitor import monitor_news, BASE_URL, create_directory_structure
 from news_event_extractor import NewsEventExtractor
+from news_storage import (
+    TIME_FORMAT,
+    ensure_cached_parse_result,
+    find_latest_json_file,
+    get_collection_datetime as get_storage_collection_datetime,
+    load_text_metadata,
+    save_text_metadata,
+    write_cached_parse_result
+)
 
 # 创建Flask应用
 app = Flask(__name__)
@@ -59,12 +68,7 @@ def parse_date_value(date_str, fmt):
 
 def get_collection_date(file_path, json_directory):
     """从JSON相对路径中提取采集日期"""
-    relative_path = os.path.relpath(file_path, json_directory)
-    path_parts = relative_path.split(os.sep)
-    if not path_parts:
-        return None
-
-    return parse_date_value(path_parts[0], "%Y%m%d")
+    return get_storage_collection_datetime(file_path, json_directory)
 
 
 def get_event_sort_date(event_date):
@@ -110,6 +114,109 @@ def build_news_item(data, file_path, json_directory, base_dir):
     news_item["_event_sort"] = get_event_sort_date(news_item.get("event_date"))
     return news_item
 
+
+def update_parse_metadata(file_path, parse_status, parsed_json_path=None, error=None, parsed_at=None):
+    """更新新闻原文sidecar中的解析状态"""
+    metadata = load_text_metadata(file_path)
+    metadata["source_file"] = os.path.basename(file_path)
+    metadata["source_txt_path"] = file_path
+    metadata["parse_status"] = parse_status
+    metadata["is_parsed"] = parse_status == "parsed"
+    metadata["last_parse_attempt_at"] = datetime.now().strftime(TIME_FORMAT)
+
+    if parsed_json_path:
+        metadata["parsed_json_path"] = parsed_json_path
+    elif parse_status != "parsed":
+        metadata.pop("parsed_json_path", None)
+
+    if parse_status == "parsed":
+        metadata["parsed_at"] = parsed_at or datetime.now().strftime(TIME_FORMAT)
+        metadata.pop("parse_error", None)
+    elif error:
+        metadata["parse_error"] = error
+    else:
+        metadata.pop("parse_error", None)
+
+    save_text_metadata(file_path, metadata)
+    return metadata
+
+
+def restore_existing_parse_result(file_path, json_directory):
+    """若新闻已有本地或历史解析结果，则直接复用"""
+    metadata = load_text_metadata(file_path)
+    cached_json_path = metadata.get("parsed_json_path")
+
+    if cached_json_path and os.path.exists(cached_json_path):
+        parsed_at = datetime.fromtimestamp(os.path.getmtime(cached_json_path)).strftime(TIME_FORMAT)
+        update_parse_metadata(
+            file_path,
+            "parsed",
+            parsed_json_path=cached_json_path,
+            parsed_at=parsed_at
+        )
+        return cached_json_path
+
+    cached_json_path = ensure_cached_parse_result(file_path, json_directory)
+    if not cached_json_path:
+        return None
+
+    parsed_at = datetime.fromtimestamp(os.path.getmtime(cached_json_path)).strftime(TIME_FORMAT)
+    update_parse_metadata(
+        file_path,
+        "parsed",
+        parsed_json_path=cached_json_path,
+        parsed_at=parsed_at
+    )
+    return cached_json_path
+
+
+def process_news_text_file(file_path, json_directory, extractor):
+    """处理单个新闻原文文件，优先复用本地缓存，避免重复调用大模型"""
+    if file_path in processed_files:
+        print(f"文件已处理过，跳过: {file_path}")
+        return
+
+    cached_json_path = restore_existing_parse_result(file_path, json_directory)
+    if cached_json_path:
+        print(f"新闻已解析过，直接复用本地缓存: {cached_json_path}")
+        processed_files.add(file_path)
+        return
+
+    print(f"正在处理文件: {file_path}")
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        print(f"读取新闻原文失败 {file_path}: {e}")
+        update_parse_metadata(file_path, "read_failed", error=str(e))
+        processed_files.add(file_path)
+        return
+
+    if not content.strip():
+        print(f"文件内容为空: {file_path}")
+        update_parse_metadata(file_path, "empty", error="文件内容为空")
+        processed_files.add(file_path)
+        return
+
+    result = extractor.extract_events(content)
+    if isinstance(result, dict) and result.get("success") is False:
+        print(f"解析新闻失败 {file_path}: {result.get('error')}")
+        update_parse_metadata(file_path, "parse_failed", error=result.get("error", "未知错误"))
+        processed_files.add(file_path)
+        return
+
+    cached_json_path = write_cached_parse_result(file_path, json_directory, result)
+    parsed_at = datetime.fromtimestamp(os.path.getmtime(cached_json_path)).strftime(TIME_FORMAT)
+    update_parse_metadata(
+        file_path,
+        "parsed",
+        parsed_json_path=cached_json_path,
+        parsed_at=parsed_at
+    )
+    print(f"已保存解析缓存: {cached_json_path}")
+    processed_files.add(file_path)
+
 class NewsFileHandler(FileSystemEventHandler):
     """处理新闻文件变化的处理器"""
     
@@ -128,48 +235,7 @@ class NewsFileHandler(FileSystemEventHandler):
     
     def process_news_file(self, file_path):
         """处理新闻文件并提取事件信息"""
-        try:
-            # 检查是否已经处理过该文件
-            if file_path in processed_files:
-                print(f"文件已处理过，跳过: {file_path}")
-                return
-                
-            print(f"正在处理文件: {file_path}")
-            
-            # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            if not content.strip():
-                print(f"文件内容为空: {file_path}")
-                processed_files.add(file_path)
-                return
-            
-            # 使用news_event_extractor解析内容
-            result = self.extractor.extract_events(content)
-            
-            # 生成JSON文件名
-            base_name = os.path.basename(file_path)
-            name_without_ext = os.path.splitext(base_name)[0]
-            json_filename = f"{name_without_ext}.json"
-            
-            # 创建日期目录结构
-            today = datetime.now().strftime("%Y%m%d")
-            json_path = os.path.join(self.json_directory, today, "Phonix", "ssgsyjy")
-            
-            # 确保目录存在
-            os.makedirs(json_path, exist_ok=True)
-            
-            # 保存JSON文件
-            json_file_path = os.path.join(json_path, json_filename)
-            with open(json_file_path, 'w', encoding='utf-8') as f:
-                json.dump(result, f, ensure_ascii=False, indent=2)
-            
-            print(f"已保存JSON文件: {json_file_path}")
-            processed_files.add(file_path)
-            
-        except Exception as e:
-            print(f"处理文件时出错 {file_path}: {e}")
+        process_news_text_file(file_path, self.json_directory, self.extractor)
 
 def process_existing_files(watch_directory, json_directory):
     """处理已存在的文件"""
@@ -188,44 +254,8 @@ def process_existing_files(watch_directory, json_directory):
                 if file_path in processed_files:
                     print(f"文件已处理过，跳过: {file_path}")
                     continue
-                    
-                try:
-                    print(f"正在处理已存在的文件: {file_path}")
-                    
-                    # 读取文件内容
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    
-                    if not content.strip():
-                        print(f"文件内容为空: {file_path}")
-                        processed_files.add(file_path)
-                        continue
-                    
-                    # 使用news_event_extractor解析内容
-                    result = extractor.extract_events(content)
-                    
-                    # 生成JSON文件名
-                    base_name = os.path.basename(file_path)
-                    name_without_ext = os.path.splitext(base_name)[0]
-                    json_filename = f"{name_without_ext}.json"
-                    
-                    # 创建日期目录结构
-                    today = datetime.now().strftime("%Y%m%d")
-                    json_path = os.path.join(json_directory, today, "Phonix", "ssgsyjy")
-                    
-                    # 确保目录存在
-                    os.makedirs(json_path, exist_ok=True)
-                    
-                    # 保存JSON文件
-                    json_file_path = os.path.join(json_path, json_filename)
-                    with open(json_file_path, 'w', encoding='utf-8') as f:
-                        json.dump(result, f, ensure_ascii=False, indent=2)
-                    
-                    print(f"已保存JSON文件: {json_file_path}")
-                    processed_files.add(file_path)
-                    
-                except Exception as e:
-                    print(f"处理文件时出错 {file_path}: {e}")
+
+                process_news_text_file(file_path, json_directory, extractor)
 
 def start_file_watcher(watch_directory, json_directory):
     """启动文件监视器"""
@@ -263,7 +293,7 @@ def start_news_monitor(refresh_interval=30):
     print("启动新闻链接监视器...")
     
     # 创建保存新闻文件的目录
-    directory = create_directory_structure()
+    directory = create_directory_structure(os.path.dirname(__file__))
     
     # 启动监视器
     monitor_news(BASE_URL, refresh_interval, directory)
@@ -347,14 +377,7 @@ def get_llm_content(filename):
     """获取LLM判断原文内容"""
     base_dir = os.path.dirname(__file__)
     # 查找对应的JSON文件
-    json_file = None
-    for root, dirs, files in os.walk(os.path.join(base_dir, 'newsJson')):
-        for file in files:
-            if file == filename:
-                json_file = os.path.join(root, file)
-                break
-        if json_file:
-            break
+    json_file = find_latest_json_file(os.path.join(base_dir, 'newsJson'), filename)
     
     if json_file:
         try:

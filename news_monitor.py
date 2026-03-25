@@ -6,30 +6,57 @@ from urllib.parse import urlparse
 import re
 from datetime import datetime
 
+from news_storage import (
+    TIME_FORMAT,
+    collect_seen_links,
+    ensure_news_data_directory,
+    get_cached_json_path,
+    load_text_metadata,
+    update_text_metadata
+)
+
 # 使用之前找到的BASE_URL
 BASE_URL = "https://finance.ifeng.com/shanklist/1-62-305749-"
+ARTICLE_URL_PATTERN = re.compile(r"^https?://finance\.ifeng\.com/c/[^/?#]+$")
 
-def create_directory_structure():
+def create_directory_structure(base_dir=None):
     """创建所需的目录结构"""
-    directory = "/Users/yichen/Documents/LLM_NewsWeaver/newsData/Phonix/ssgsyjy/"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        print(f"已创建目录: {directory}")
+    if base_dir is None:
+        base_dir = os.path.dirname(__file__)
+
+    directory = ensure_news_data_directory(base_dir)
     return directory
 
-def get_even_indexed_links(links):
-    """
-    获取索引为偶数的链接（过滤掉索引为奇数的链接）
-    
-    Args:
-        links (list): 原始链接列表
-        
-    Returns:
-        list: 索引为偶数的链接列表
-    """
-    # 只保留索引为偶数的链接（0, 2, 4, ...）
-    even_indexed_links = [link for i, link in enumerate(links) if i % 2 == 0]
-    return even_indexed_links
+def normalize_link(url, base_url):
+    """将链接统一转换为完整URL"""
+    if not url:
+        return None
+
+    if url.startswith('//'):
+        return 'https:' + url
+    if url.startswith('/'):
+        parsed_url = urlparse(base_url)
+        return f"{parsed_url.scheme}://{parsed_url.netloc}{url}"
+    return url
+
+
+def is_article_link(url):
+    """只保留凤凰财经正文页链接，过滤评论页等噪声链接"""
+    return bool(url and ARTICLE_URL_PATTERN.match(url))
+
+
+def deduplicate_links(links):
+    """按出现顺序去重"""
+    unique_links = []
+    seen = set()
+
+    for link in links:
+        if link in seen:
+            continue
+        seen.add(link)
+        unique_links.append(link)
+
+    return unique_links
 
 def scrape_news_links(url):
     """
@@ -60,19 +87,18 @@ def scrape_news_links(url):
             # 查找div中的a标签
             a_tags = item.find_all('a')
             for a_tag in a_tags:
-                href = a_tag.get('href')
-                if href:
-                    # 处理相对链接
-                    if href.startswith('//'):
-                        href = 'https:' + href
-                    elif href.startswith('/'):
-                        parsed_url = urlparse(url)
-                        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-                        href = base_url + href
-                    
+                href = normalize_link(a_tag.get('href'), url)
+                if is_article_link(href):
+                    links.append(href)
+
+        if not links:
+            # 兼容页面结构调整时的兜底策略
+            for a_tag in soup.find_all('a', href=True):
+                href = normalize_link(a_tag.get('href'), url)
+                if is_article_link(href):
                     links.append(href)
         
-        return links
+        return deduplicate_links(links)
     
     except requests.RequestException as e:
         print(f"请求错误: {e}")
@@ -169,7 +195,8 @@ def monitor_news(base_url, refresh_interval, directory):
         refresh_interval (int): 刷新间隔（秒）
         directory (str): 保存文件的目录
     """
-    seen_links = set()  # 记录已经处理过的链接
+    seen_links = collect_seen_links(directory)  # 记录已经处理过的链接
+    json_directory = os.path.join(os.path.dirname(__file__), "newsJson")
     
     print(f"开始监测新闻，刷新间隔: {refresh_interval} 秒")
     print(f"基础URL: {base_url}")
@@ -180,32 +207,63 @@ def monitor_news(base_url, refresh_interval, directory):
         try:
             print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 正在检查新新闻...")
             
-            # 获取当前所有链接
+            # 获取当前所有正文链接
             current_links = scrape_news_links(base_url)
             print(f"找到 {len(current_links)} 个链接")
-            
-            # 过滤掉索引为奇数的链接，只保留索引为偶数的链接
-            filtered_links = get_even_indexed_links(current_links)
-            print(f"过滤后剩余 {len(filtered_links)} 个链接（仅索引为偶数的链接）")
-            
+
             # 检查是否有新链接
-            new_links = [link for link in filtered_links if link not in seen_links]
+            new_links = [link for link in current_links if link not in seen_links]
             
             if new_links:
                 print(f"发现 {len(new_links)} 个新链接")
                 for link in new_links:
                     print(f"处理新链接: {link}")
                     
+                    filename = extract_filename_from_url(link)
+                    file_path = os.path.join(directory, filename)
+                    cached_json_path = get_cached_json_path(json_directory, filename)
+                    metadata = load_text_metadata(file_path) if os.path.exists(file_path) else {}
+
+                    if os.path.exists(file_path):
+                        update_text_metadata(
+                            file_path,
+                            source_url=link,
+                            source_file=filename,
+                            last_seen_at=datetime.now().strftime(TIME_FORMAT),
+                            parse_status=metadata.get("parse_status", "pending"),
+                            is_parsed=metadata.get("is_parsed", os.path.exists(cached_json_path)),
+                            parsed_json_path=metadata.get("parsed_json_path") or (
+                                cached_json_path if os.path.exists(cached_json_path) else None
+                            )
+                        )
+                        seen_links.add(link)
+                        if metadata.get("is_parsed") or os.path.exists(cached_json_path):
+                            print(f"新闻已解析过，直接复用本地结果: {filename}")
+                        else:
+                            print(f"新闻原文已存在，等待本地解析流程处理: {filename}")
+                        continue
+
                     # 使用修改后的函数获取文章内容
                     content = scrape_article_content(link)
                     if content:
-                        # 提取文件名
-                        filename = extract_filename_from_url(link)
                         # 保存内容
-                        save_article_content(content, filename, directory)
-                        # 添加到已处理集合
-                        seen_links.add(link)
-                        print(f"成功解析并保存文章内容: {filename}")
+                        if save_article_content(content, filename, directory):
+                            update_text_metadata(
+                                file_path,
+                                source_url=link,
+                                source_file=filename,
+                                scrape_status="downloaded",
+                                parse_status="pending",
+                                is_parsed=False,
+                                parsed_json_path=None,
+                                scraped_at=datetime.now().strftime(TIME_FORMAT),
+                                last_seen_at=datetime.now().strftime(TIME_FORMAT)
+                            )
+                            # 添加到已处理集合
+                            seen_links.add(link)
+                            print(f"成功保存新闻原文，等待解析: {filename}")
+                        else:
+                            print(f"保存新闻原文失败: {filename}")
                     else:
                         print(f"无法获取链接内容或内容为空: {link}")
                     # 短暂延迟以避免过于频繁的请求
@@ -213,8 +271,8 @@ def monitor_news(base_url, refresh_interval, directory):
             else:
                 print("没有发现新链接")
             
-            # 更新已知链接集合（使用过滤后的链接）
-            seen_links.update(filtered_links)
+            # 更新已知链接集合
+            seen_links.update(current_links)
             
             print(f"等待 {refresh_interval} 秒后再次检查...")
             time.sleep(refresh_interval)
