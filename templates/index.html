@@ -549,10 +549,13 @@
         <header class="hero">
             <div class="hero-content">
                 <span class="eyebrow">newsLLM · 实时新闻解析看板</span>
-                <h1>当前模型:GPT-5.4</h1>
+                <h1>新闻列表按网页发布时间倒序排列，最新发布的内容会排在最前面。</h1>
+                <p class="hero-description">
+                    发布时间取自文章页作者名下方的时间字段。列表先按网页发布时间排序，再回退到采集日期和文件更新时间，同一条新闻仍只保留最新解析版本。
+                </p>
 
                 <div class="hero-chips">
-                    <span class="hero-chip">最新批次：{{ latest_collection_date }}</span>
+                    <span class="hero-chip">最新发布时间：{{ latest_publish_time }}</span>
                     <span class="hero-chip">最近更新：{{ latest_update_time }}</span>
                     <span class="timestamp">当前时间: {{ current_time }}</span>
                 </div>
@@ -567,7 +570,7 @@
                 <div class="stat-card">
                     <span class="stat-label">利空新闻</span>
                     <strong class="stat-value">{{ impact_stats.negative }}</strong>
-                    <span class="stat-hint">优先关注最新批次中的负面事件。</span>
+                    <span class="stat-hint">优先关注最新发布时间对应的负面事件。</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">中性新闻</span>
@@ -587,9 +590,9 @@
                 <div class="section-head">
                     <div>
                         <h2>新闻列表</h2>
-                        <p>列表首位就是当前最新更新的新闻，越靠前代表采集时间越新。</p>
+                        <p>列表首位就是网页发布时间最新的新闻，越靠前代表发布时间越新。</p>
                     </div>
-                    <div class="sort-note">排序规则：采集日期 > 文件更新时间 > 事件日期</div>
+                    <div class="sort-note">排序规则：网页发布时间 > 采集日期 > 文件更新时间 > 事件日期</div>
                 </div>
 
                 <div class="news-grid">
@@ -597,9 +600,9 @@
                         <article class="news-card">
                             <div class="card-top">
                                 <div class="card-badges">
-                                    <span class="badge badge-collection">采集 {{ news.collection_date }}</span>
-                                    {% if news.collection_date == latest_collection_date %}
-                                        <span class="badge badge-latest">最新批次</span>
+                                    <span class="badge badge-collection">发布 {{ news.published_at }}</span>
+                                    {% if news.published_at == latest_publish_time %}
+                                        <span class="badge badge-latest">最新发布时间</span>
                                     {% endif %}
                                     {% if loop.first %}
                                         <span class="badge badge-top">当前置顶</span>
@@ -613,7 +616,7 @@
                             <div class="company-row">
                                 <div>
                                     <div class="company-name">{{ news.company if news.company else '未知公司' }}</div>
-                                    <div class="company-subtitle">结构化事件提取结果</div>
+                                    <div class="company-subtitle">{{ news.source_name if news.source_name else '结构化事件提取结果' }}</div>
                                 </div>
                                 {% if news.ticker %}
                                     <div class="ticker">{{ news.ticker }}</div>
@@ -632,21 +635,21 @@
 
                             <div class="meta-grid">
                                 <div class="meta-block">
-                                    <span class="meta-label">事件日期</span>
-                                    <div class="meta-value">{{ news.event_date if news.event_date else '未知' }}</div>
+                                    <span class="meta-label">网页发布时间</span>
+                                    <div class="meta-value">{{ news.published_at }}</div>
                                 </div>
                                 <div class="meta-block">
-                                    <span class="meta-label">最新更新时间</span>
-                                    <div class="meta-value">{{ news.updated_at }}</div>
+                                    <span class="meta-label">事件日期</span>
+                                    <div class="meta-value">{{ news.event_date if news.event_date else '未知' }}</div>
                                 </div>
                                 <div class="meta-block">
                                     <span class="meta-label">影响方向</span>
                                     <span class="impact-pill {{ news.impact_direction if news.impact_direction else 'unknown' }}">{{ news.impact_label }}</span>
                                 </div>
                                 <div class="meta-block">
-                                    <span class="meta-label">影响分数</span>
+                                    <span class="meta-label">采集日期</span>
                                     <div class="meta-value">
-                                        {{ '%.2f'|format(news.impact_score) if (news.impact_score is defined and news.impact_score is not none) else '暂无' }}
+                                        {{ news.collection_date }}
                                     </div>
                                 </div>
                             </div>

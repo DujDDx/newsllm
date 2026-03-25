@@ -8,7 +8,7 @@ import threading
 from flask import Flask, render_template
 
 # 导入我们现有的模块
-from news_monitor import monitor_news, BASE_URL, create_directory_structure
+from news_monitor import monitor_news, BASE_URL, create_directory_structure, ensure_article_metadata
 from news_event_extractor import NewsEventExtractor
 from news_storage import (
     TIME_FORMAT,
@@ -77,8 +77,9 @@ def get_event_sort_date(event_date):
 
 
 def get_news_sort_key(news_item):
-    """新闻排序键：优先按采集日期，再按文件修改时间，再按事件日期"""
+    """新闻排序键：优先按网页发布时间，再按采集日期、文件修改时间和事件日期"""
     return (
+        news_item.get("_published_sort", datetime.min),
         news_item.get("_collection_sort", datetime.min),
         news_item.get("_updated_sort", 0.0),
         news_item.get("_event_sort", datetime.min)
@@ -89,9 +90,15 @@ def build_news_item(data, file_path, json_directory, base_dir):
     """构建前端展示需要的新闻数据"""
     source_file = os.path.basename(file_path)
     txt_filename = os.path.splitext(source_file)[0] + ".txt"
+    txt_file_path = os.path.join(base_dir, "newsData", "Phonix", "ssgsyjy", txt_filename)
     collection_date = get_collection_date(file_path, json_directory)
     updated_timestamp = os.path.getmtime(file_path)
     updated_datetime = datetime.fromtimestamp(updated_timestamp)
+    text_metadata = load_text_metadata(txt_file_path)
+    if os.path.exists(txt_file_path) and not text_metadata.get("published_at"):
+        text_metadata = ensure_article_metadata(txt_file_path)
+    published_at = text_metadata.get("published_at")
+    published_datetime = parse_date_value(published_at, TIME_FORMAT)
     event_types = data.get("event_type")
 
     if isinstance(event_types, list):
@@ -103,12 +110,16 @@ def build_news_item(data, file_path, json_directory, base_dir):
 
     news_item = dict(data)
     news_item["source_file"] = source_file
-    news_item["news_txt_file"] = os.path.join(base_dir, "newsData", "Phonix", "ssgsyjy", txt_filename)
+    news_item["news_txt_file"] = txt_file_path
     news_item["json_file_path"] = file_path
     news_item["collection_date"] = collection_date.strftime("%Y-%m-%d") if collection_date else "未知"
+    news_item["published_at"] = published_at or "未知"
     news_item["updated_at"] = updated_datetime.strftime("%Y-%m-%d %H:%M:%S")
     news_item["impact_label"] = IMPACT_LABELS.get(news_item.get("impact_direction"), "未知")
     news_item["event_type_labels"] = localized_event_types
+    news_item["source_name"] = text_metadata.get("source_name")
+    news_item["source_location"] = text_metadata.get("source_location")
+    news_item["_published_sort"] = published_datetime or datetime.min
     news_item["_collection_sort"] = collection_date or datetime.min
     news_item["_updated_sort"] = updated_timestamp
     news_item["_event_sort"] = get_event_sort_date(news_item.get("event_date"))
@@ -175,6 +186,8 @@ def process_news_text_file(file_path, json_directory, extractor):
     if file_path in processed_files:
         print(f"文件已处理过，跳过: {file_path}")
         return
+
+    ensure_article_metadata(file_path)
 
     cached_json_path = restore_existing_parse_result(file_path, json_directory)
     if cached_json_path:
@@ -337,7 +350,7 @@ def index():
     json_directory = os.path.join(os.path.dirname(__file__), 'newsJson')
     # 获取过滤后的新闻数据
     news_data = get_filtered_news_data(json_directory)
-    latest_collection_date = news_data[0]['collection_date'] if news_data else "暂无"
+    latest_publish_time = news_data[0]['published_at'] if news_data else "暂无"
     latest_update_time = news_data[0]['updated_at'] if news_data else "暂无"
     impact_stats = {
         'positive': sum(1 for item in news_data if item.get('impact_direction') == 'positive'),
@@ -351,7 +364,7 @@ def index():
         'index.html',
         news_data=news_data,
         current_time=current_time,
-        latest_collection_date=latest_collection_date,
+        latest_publish_time=latest_publish_time,
         latest_update_time=latest_update_time,
         impact_stats=impact_stats
     )
